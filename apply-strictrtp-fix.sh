@@ -91,15 +91,25 @@ updateRpms() {
     [[ $verbose ]] && param+="v"
     [[ $debug ]] && param+=" --test"
 
+    # Stop the Asterisk daemon
+    service asterisk stop
+
     # Word splitting should be done here, hush
     # shellcheck disable=SC2086
     rpm $param "$tmp/*.rpm"
+
+    # We're done, start Asterisk again
+    service asterisk start
 }
 
 cleanup() {
     vecho "Cleaning up: ${tmp:?}/"
     [[ -d "$tmp" ]] && rm -rf "${tmp:?}/"
 
+    vecho "Checking in on the Asterisk daemon"
+    if ! service asterisk status>/dev/null ; then service asterisk start ; fi
+
+    # Return proper exit code
     trap 'exit $?' EXIT
 }
 
